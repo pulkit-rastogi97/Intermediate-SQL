@@ -1,0 +1,467 @@
+
+
+
+Transaction Control Statements
+
+
+DB transaction
+
+
+series of Database operations
+
+starts with 	1st DML statement
+Ends with	Commit
+		Rollback
+		DDL/DCL statement	Auto commit  
+
+TCL statements
+
+COMMIT - Saves the changes to the database. Ends the transaction
+
+ROLLBACK - Discards the changes. Ends the transaction
+
+SAVEPOINT - Marker point within the transaction
+
+
+Connect dbsql
+
+Select * from Employee
+Insert into ....
+
+Delete
+
+Update
+
+Commit	--transaction end
+
+Delete - New transaction starts
+select
+Insert
+update
+insert
+delete
+Rollback - end of trn
+
+rollback will undo the changes till last commit / from start of the transaction till that point
+
+Select
+Insert
+Update
+	Savepoint S1
+delete
+select
+update
+	Savepoint S2
+select
+delete
+	Savepoint S3
+update
+	Savepoint S4
+insert
+update
+
+Rollback to S3
+
+---------------------
+Connect user1
+select
+1 insert
+2 update
+3 delete
+4 Commit
+5 Insert
+6 select
+7 savepoint S2
+8 update
+9 delete
+10 Savepint S4
+11 select
+12 insert
+13 Savepoint S5
+14 Commit
+rollback - it wont rollback anything
+15 Rollback to S4 - throw the error that this savepoint does not exist
+16 update
+
+Once committed user can not rollback
+whenever user commits the transaction, all the savepoints within the transaction will be erased
+
+
+1 select
+2 insert
+3 delete
+4 savepoint S2
+5 update
+6 insert
+7 delete
+8 Savepoint S3
+9 insert
+10 Create table t1 as select * from department DDL statement : Auto Commit
+11 select
+12 update
+13 Savepoint S4
+14 Insert
+15 delete
+Rollback
+
+
+
+State of the transaction before commit or Rollback
+
+1. Previous state of the data can be restored
+2. Current user can see the changes
+3. Other users can not see the changes
+
+
+State of the data After Commit
+
+1. All the users can see the changes
+2. Data changes are permanent in the DB
+3. Pevious state of the data is lost
+4. Savepoints within the trans will be erased
+
+State of the Data after Rollback
+1. Changes are undone
+2. Previous state of the data is restored
+
+
+dbsql
+------
+
+Employee	10 records
+Grant select on Employee to User1
+
+Insert into Employee
+select * From Empbackup; 5 rows inserted
+
+select * from Employee	15 records
+
+Commit
+
+User1
+-------
+
+select * from dbsql.Employee	10 records
+
+After insertion by dbsql
+select * from dbsql.Employee	10 records
+
+After Commit
+selet * from dbsql.Employee	15 records
+
+
+
+DCL statements
+---------------------
+
+Data Control Language
+
+	Control access to the data or to the database
+
+GRANT
+REVOKE
+
+
+GRANT to provide access/privileges on the DB objects to other users
+
+Privileges
+	Object level privilege
+	System level privilege
+
+	Object priv : 
+	Objects : TABLE, VIEW, PROCEDURE, TRIGGER, SEQUENCE etc
+	Privileges : SELECT, INSERT, UPDATE, DELETE, EXECUTE etc
+
+
+	syntax - 
+	GRANT Privileges ON object TO User [With Grant Option ]
+	GRANT select ON Products to User1
+	GRANT select, update, delete on Employees to User1 ,USer3
+
+	User1
+		select * from dbsql.products
+
+	dbsql
+	Grant select on Customers to User1 With Grant option
+	Granter : DBSQL
+	Grantee : User1
+
+	user1
+	select * from dbsql.customers
+	Grant select on dbsql.customers to User5 With Grant option
+
+	User5
+	Grant select on dbsql.customers to User7
+	
+	System privs
+		CREATE any table, Alter any table, Drop any table
+		Create any View, Create any sequence
+		Create any trigger, drop any trigger
+		etc
+
+	Syntax GRANT privileges TO User [ With Admin option ]
+		GRANT create any table To User2
+		GRANT Alter any table, create any function to User3
+		Grant create any view to User1, USer5
+
+		dbsql
+		Grant create any procedure to User3 with Admin option
+		User3
+		Create procedure name ..
+		Grant create any procedure to User4
+
+
+
+DBSQL
+Grant crete any table to User1
+grant create any view, alter any view to User1
+Grant create any procedure, create any trigger to user1
+Grant select on Employee to User1
+Grant insert, update on Dept to User1
+-
+-
+-
+-
+-
+-
+-
+-
+-
+
+ROLE
+	group of privileges
+
+CREATE Role R1
+
+Grant crete any table to R1
+grant create any view, alter any view to R1
+Grant create any procedure, create any trigger to R1
+Grant select on Employee to R1
+Grant insert, update on Dept to R1;
+
+GRANT R1 to User1, User2;
+
+Grant R1, R2 to User4
+
+Create Role Rol1 identified by passwd
+Set Role Rol1 identified by passwd
+	Grant Rol1 to User7;
+
+
+
+
+REVOKE to remove or ungrant the privileges on the objects from the users
+
+	Object privileges
+	syntax
+		REVOKE privileges ON Object From User / R1
+
+	System
+	Syntax
+		REVOKE privileges FROM User1 / R1
+
+Revoke stmt is used
+- to revoke object level privileges from users / roles
+- to revoke system privileges from users/roles
+- to revoke roles from user
+
+Revoke R1 from User4
+
+
+DBSQL
+	grant select on Employee to User1 with grant option
+User1
+	select * from dbsql.Employee
+	Grant select on dbsql.employee to User2 with grant option
+User2
+	Grant select on dbsql.employee to User3 with grant option
+
+DBSQL
+	REVOKE select on Employee FROM User1
+
+DBSQL - > user1->user2->user3
+
+
+cascading of Revoke - happen in case of object level priv assigned using With grant option
+		wont happen in case of system priv assigned using With Admin option
+
+select * from user_tab_privs_made
+select * from user_tab_privs_RECD
+select * from role_tab_privs
+
+
+Other objects in the Database
+------------------------------
+
+
+VIEW
+SEQUENCE
+INDEX
+SYNONYM
+
+
+VIEW -
+
+Logical , virtual table
+
+View -> Base Table
+does not contain any physical data
+stored in select statement in data dictionary
+
+
+
+Create [or replace ] View v_name as select ..........
+
+select * From v_name;
+
+Create View emp_details_6420
+as 
+select employeeid, firstname||' '||lastname as full_name, job_id, salary, e.department_id,
+D.department_name, l.city
+from Employee E join Department D
+on E.department_id=D.department_id
+join Location_dtls L 
+on d.locationid= l.locationid
+Where D.department_id in (10,20,30 )
+
+
+Create or replace View emp_details_6420
+as 
+select employeeid, firstname||' '||lastname as full_name, job_id, salary, 
+e.department_id, e.manager_id, e.email, 
+D.department_name, l.city
+from Employee E join Department D
+on E.department_id=D.department_id
+join Location_dtls L 
+on d.locationid= l.locationid
+Where D.department_id in (10,20,30 )
+
+select * from emp_details_6420;
+
+
+Advantages
+ to make simple queries to get the result of complicated queries
+ one view can be used to fetch data from multiple tables
+ Provide set of users access to specific data according to their criteria/skill
+
+
+Crp
+----
+
+
+Employee 100 column 3000 rows
+
+--Grant select on Employee to Finance
+
+Create View fin_employee_view as select ...10 columns .... from Employee
+
+Grant select in fin_employee_view to Finanace
+
+
+Finance
+-------
+
+select * from crp.fin_employee_view
+
+
+
+
+
+
+SEQUENCE
+----------
+	user created DB object
+	to generate unique integers
+	to populate primary key value
+
+CREATE SEQUENCE seq_gen_6420
+START WITH 1
+INCREMENT BY 1
+MAXVALUE 10
+--CYCLE /NOCYCLE
+
+ALTER SEQUENCE seq_gen_6420
+MAXVALUE 999999
+
+NEXTVAL - to generate next unique value
+CURRVAL - display last generated number by the sequence
+
+select seq_gen_6420.NEXTVAL from dual
+
+select seq_gen_6420.CURRVAL from dual
+
+
+
+Insert into dept_new(department_id, department_name)
+Values( seq_gen_6420.NEXTVAL, '&Department_name')
+
+select * From user_Sequences
+
+INDEX
+-------
+
+ speed up the retrieval of data using pointer
+ can be created explicitly or automatically
+ is used and maintained by the oracle server automatically
+ When user drop a table, all the index on that table will be dropped
+
+Primary key / unique key constraint : automaticallly index will be available on that column
+
+Create Index iname On Tablename(Columnname)
+
+Create index indx_job_id on Employee(Job_id)
+
+
+select ... from Employee
+Where job_id='IT_REP'
+
+Where department_id
+Where job_id=
+Where manager_id=
+Where city =
+
+Drop Index iname;
+
+
+select * from user_indexes
+select * From user_ind_columns
+Where table_name='CUSTOMERS'
+
+
+SYNONYM
+
+	Alternative name for any database obj
+
+	1. Ob name is lengthy
+	2. to make it easy to access objects owned by other users
+
+	Create Synonym s_name for Objectname;
+
+DBSQL
+	Employee
+
+User1
+	select * from dbsql.employee
+	Create Synonym dbemp for dbsql.Employee
+	select * From dbemp
+
+select * From user_synonyms
+
+
+
+
+
+Course details
+
+Basic SQL Queries
+Intermediate SQL Queries
+
+Advance SQL Queries
+Basic PL/SQL
+Intermediate PL/SQL
+fundamentals sql performance tuning
+
+
+
+Basic SQL Queries	15 marks 15 MCQ	70% Passing
+Intermediate SQL	20 marks 20 MCQ 70% passing
